@@ -3,20 +3,40 @@ import requests
 import time
 import uuid
 import sys
+import re
+from urllib.parse import urlparse
+from urllib import parse
+from urllib import robotparser
+import json
 
 seedFile = sys.argv[1]
 crawlNum = int(sys.argv[2])
 crawlNumBackup = crawlNum
+parser = robotparser.RobotFileParser()
 
 queue = [line.rstrip() for line in open(seedFile)]
+
 visited = set()
 
 animation = ["[■□□□□□□□□□]","[■■□□□□□□□□]", "[■■■□□□□□□□]", "[■■■■□□□□□□]", "[■■■■■□□□□□]", "[■■■■■■□□□□]", "[■■■■■■■□□□]", "[■■■■■■■■□□]", "[■■■■■■■■■□]", "[■■■■■■■■■■]"]
 
 while(queue and crawlNum > 0):
+    # 1) Dequeue
     url = queue[0]
-    #print("Visited: " + url)
     if url not in visited:
+        # 2) Check robots.txt
+        robotURL = "https://" + urlparse(url).netloc + "/robots.txt"
+        try:
+            robotContent = requests.get(robotURL).text
+            parser.set_url(parse.urljoin(url, 'robots.txt'))
+            parser.read()
+            canCrawl = parser.can_fetch("*", "https://" + urlparse(url).netloc)
+            if(not canCrawl):
+                queue.pop(0)
+                continue
+        except Exception:
+            continue
+
         print("Crawling:", url)
         visited.add(url)
         crawlNum -= 1
@@ -24,6 +44,7 @@ while(queue and crawlNum > 0):
         queue.pop(0)
         continue
     
+    # 3) get HTML and write to file
     try:
         html_content = requests.get(url).text
     except Exception:
@@ -34,6 +55,8 @@ while(queue and crawlNum > 0):
     text_file.write(html_content)
     text_file.close()
 
+
+    # 4) extract HTML and add to frontier
     soup = BeautifulSoup(html_content, "lxml")
 
     for link in soup.find_all("a"):
@@ -46,7 +69,10 @@ while(queue and crawlNum > 0):
             else:
                 fixedLink = url + href
         else:
-            fixedLink = href
+            if url.startswith('http'):
+                fixedLink = re.sub(r'https?:\\', '', url)
+            if url.startswith('www.'):
+                fixedLink = re.sub(r'www.', '', url)
         if(fixedLink.endswith("//")):
             fixedLink = fixedLink[:-1]
         if(not fixedLink.endswith("/")):
@@ -57,6 +83,7 @@ while(queue and crawlNum > 0):
 
     queue.pop(0)
     
+    #simple animation taken from https://stackoverflow.com/questions/22029562/python-how-to-make-simple-animated-loading-while-process-is-running
     for i in range(len(animation)):
         time.sleep(0.3)
         sys.stdout.write("\r" + animation[i % len(animation)])
