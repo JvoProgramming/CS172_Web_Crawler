@@ -1,6 +1,8 @@
 # QueryGadget
 
 QueryGadget is an application that allows the user to scrape the web given a seed url. The program then crawls to links found from the seed and populates the frontier with URLs scraped from a given page. Each page is then indexed into a database where the user can query a word/phrase to search for relevant documents.
+
+Built using Python, BeautifulSoup, ElasticSearch, Javascript, and ExpressJS
 __________________________________________________________
 
 (WINDOWS INSTRUCTIONS)
