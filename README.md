@@ -1,4 +1,8 @@
-# CS172_Web_Crawler
+# QueryGadget
+
+QueryGadget is an application that allows the user to scrape the web given a seed url. The program then crawls to links found from the seed and populates the frontier with URLs scraped from a given page. Each page is then indexed into a database where the user can query a word/phrase to search for relevant documents.
+__________________________________________________________
+
 (WINDOWS INSTRUCTIONS)
 Requires NodeJS (for server) and install all packages required by running: npm install
 Modules required: 
